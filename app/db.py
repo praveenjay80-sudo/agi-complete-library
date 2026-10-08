@@ -1,8 +1,15 @@
+import os
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 
-DB_PATH = Path(__file__).resolve().parent.parent / "data" / "library.db"
+# DATABASE_PATH lets Railway point this at a mounted persistent volume
+# (e.g. /data/library.db) -- without it, the DB lives on the container's
+# ephemeral filesystem and every redeploy/restart silently wipes out any
+# LLM-curated additions, resetting the library back to the seed data.
+DB_PATH = Path(os.environ.get("DATABASE_PATH", "")) if os.environ.get("DATABASE_PATH") else (
+    Path(__file__).resolve().parent.parent / "data" / "library.db"
+)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS categories (
@@ -72,6 +79,11 @@ def session():
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    # WAL lets readers (e.g. the frontend polling /api/meta or /api/items)
+    # proceed without waiting on an open writer -- without it, every GET
+    # route could also queue up behind a long-running update pipeline.
+    conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("PRAGMA busy_timeout = 30000")
     try:
         yield conn
         conn.commit()

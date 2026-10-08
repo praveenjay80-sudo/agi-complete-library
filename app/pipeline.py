@@ -64,8 +64,12 @@ async def backfill_covers(conn, google_books_key: str) -> dict:
             "WHERE id=?",
             (gb["cover_url"], gb.get("publisher"), gb.get("rating"), gb.get("rating_count"), row["id"]),
         )
+        # Commit immediately, not after the whole loop -- the write lock
+        # must not stay open across the next (throttled, network-bound)
+        # iteration, or any other request touching the DB meanwhile times
+        # out with "database is locked".
+        conn.commit()
         updated += 1
-    conn.commit()
     return {"checked": len(rows), "covers_added": updated, "no_cover_found": not_found}
 
 
@@ -145,6 +149,7 @@ async def run_update(
                     "('reject', ?, 'arxiv', ?, ?)",
                     (p["title"], objective_signal, verdict.get("reasoning")),
                 )
+                conn.commit()
                 continue
 
             cat_id, created = _resolve_category(
@@ -169,6 +174,7 @@ async def run_update(
                 "(?, 'add', ?, 'arxiv', ?, ?)",
                 (item_cur.lastrowid, p["title"], objective_signal, verdict.get("reasoning")),
             )
+            conn.commit()
             items_added += 1
 
         # ---- Books: LLM proposes real titles, Google Books independently verifies each ----
@@ -198,6 +204,7 @@ async def run_update(
                         "('reject', ?, 'llm-proposal', 'no Google Books match -- unverifiable, possibly hallucinated')",
                         (title,),
                     )
+                    conn.commit()
                     continue
 
                 signal_parts = []
@@ -227,6 +234,7 @@ async def run_update(
                         "('reject', ?, 'google-books', ?, ?)",
                         (title, objective_signal, verdict.get("reasoning")),
                     )
+                    conn.commit()
                     continue
 
                 cat_id, created = _resolve_category(
@@ -251,6 +259,7 @@ async def run_update(
                     "(?, 'add', ?, 'google-books', ?, ?)",
                     (item_cur.lastrowid, title, objective_signal, verdict.get("reasoning")),
                 )
+                conn.commit()
                 items_added += 1
 
         conn.execute(
