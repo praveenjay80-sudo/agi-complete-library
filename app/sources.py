@@ -7,7 +7,7 @@ import httpx
 
 USER_AGENT = "agi-library/1.0 (https://github.com/praveenjay80-sudo/agi-library; mailto:praveen.jay80@gmail.com)"
 
-ARXIV_API_URL = "http://export.arxiv.org/api/query"
+ARXIV_API_URL = "https://export.arxiv.org/api/query"
 ARXIV_CATEGORIES = ["cs.AI", "cs.LG", "cs.CL", "cs.NE", "cs.RO"]
 
 OPENALEX_WORKS_URL = "https://api.openalex.org/works"
@@ -27,7 +27,7 @@ async def fetch_new_arxiv_papers(days_back: int = 7, max_results: int = 50) -> l
         "sortOrder": "descending",
         "max_results": max_results,
     }
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(follow_redirects=True) as client:
         resp = await client.get(ARXIV_API_URL, params=params, headers={"User-Agent": USER_AGENT}, timeout=30)
         resp.raise_for_status()
         root = ET.fromstring(resp.text)
@@ -73,7 +73,7 @@ async def lookup_openalex_work(title: str, author: str | None = None, api_key: s
     }
     if api_key:
         params["api_key"] = api_key
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(follow_redirects=True) as client:
         resp = await client.get(OPENALEX_WORKS_URL, params=params, headers={"User-Agent": USER_AGENT}, timeout=20)
         resp.raise_for_status()
         results = resp.json().get("results", [])
@@ -122,7 +122,7 @@ async def lookup_google_books(title: str, author: str | None, api_key: str) -> d
     quota wall (quota_limit_value "0"), confirmed live."""
     q = title if not author else f"{title} {author}"
     params = {"q": q, "key": api_key}
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(follow_redirects=True) as client:
         resp = await client.get(GOOGLE_BOOKS_URL, params=params, headers={"User-Agent": USER_AGENT}, timeout=20)
         resp.raise_for_status()
         items = resp.json().get("items", [])
