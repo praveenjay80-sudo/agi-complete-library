@@ -119,7 +119,10 @@ function openDetail(item) {
   if (item.venue) signalBits.push(`Venue: ${item.venue}`);
 
   let links = [];
-  if (item.source_url) links.push(`<a href="${item.source_url}" target="_blank" rel="noopener">arXiv</a>`);
+  if (item.source_url) {
+    const label = item.source_url.includes("arxiv.org") ? "arXiv" : item.source_url.includes("doi.org") ? "DOI" : "Source";
+    links.push(`<a href="${item.source_url}" target="_blank" rel="noopener">${label}</a>`);
+  }
   if (item.openalex_id) links.push(`<a href="https://openalex.org/${item.openalex_id}" target="_blank" rel="noopener">OpenAlex</a>`);
 
   content.innerHTML = `
