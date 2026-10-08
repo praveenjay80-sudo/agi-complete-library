@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AGI Complete Library</title>
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <h1>AGI Complete Library</h1>
+    <p class="tagline">A self-expanding, LLM-curated library of AGI/AI books and papers</p>
+  </div>
+  <div class="stats" id="stats">
+    <span id="stat-books">-- books</span>
+    <span id="stat-papers">-- papers</span>
+    <span id="stat-categories">-- categories</span>
+    <span id="stat-updated">never updated</span>
+  </div>
+  <div class="actions">
+    <button id="btn-update" class="btn btn-primary">Update Now</button>
+    <button id="btn-settings" class="btn btn-ghost">Settings</button>
+    <button id="btn-audit" class="btn btn-ghost">Audit Log</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="kind-toggle">
+      <button class="kind-btn active" data-kind="book">Books</button>
+      <button class="kind-btn" data-kind="paper">Papers</button>
+    </div>
+    <input id="search" type="text" placeholder="Search title or author...">
+    <div id="category-list" class="category-list"></div>
+  </aside>
+
+  <main class="content">
+    <div id="run-banner" class="run-banner hidden"></div>
+    <div id="item-grid" class="item-grid"></div>
+  </main>
+</div>
+
+<div id="detail-overlay" class="overlay hidden">
+  <div class="detail-panel">
+    <button id="detail-close" class="btn btn-ghost close-btn">&times;</button>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<div id="settings-overlay" class="overlay hidden">
+  <div class="detail-panel settings-panel">
+    <button id="settings-close" class="btn btn-ghost close-btn">&times;</button>
+    <h2>Settings</h2>
+    <p class="hint">Keys are stored only in your browser (localStorage) and sent directly to the respective API for each request. Nothing is stored on the server.</p>
+
+    <label>Anthropic API key</label>
+    <input id="key-anthropic" type="password" placeholder="sk-ant-...">
+
+    <label>Model</label>
+    <select id="model-select"><option value="">Enter Anthropic key, then click Refresh models</option></select>
+    <button id="btn-refresh-models" class="btn btn-ghost">Refresh models</button>
+
+    <label>Google Books API key <span class="hint-inline">(for book discovery &amp; covers during Update)</span></label>
+    <input id="key-googlebooks" type="password" placeholder="AIza...">
+    <button id="btn-fetch-covers" class="btn btn-ghost">Fetch missing book covers now</button>
+    <p id="covers-status" class="hint hidden"></p>
+
+    <label>OpenAlex API key <span class="hint-inline">(optional -- OpenAlex works fine with no key; only needed for its premium rate-limit tier)</span></label>
+    <input id="key-openalex" type="password" placeholder="Optional">
+
+    <button id="btn-save-settings" class="btn btn-primary">Save</button>
+    <p id="settings-saved" class="hint hidden">Saved.</p>
+  </div>
+</div>
+
+<div id="audit-overlay" class="overlay hidden">
+  <div class="detail-panel settings-panel">
+    <button id="audit-close" class="btn btn-ghost close-btn">&times;</button>
+    <h2>Audit Log</h2>
+    <p class="hint">Every automatic add/reject decision, with the objective signal and LLM reasoning behind it.</p>
+    <div id="audit-list"></div>
+  </div>
+</div>
+
+<script src="/assets/app.js"></script>
+</body>
+</html>
