@@ -108,8 +108,10 @@ EXISTING CATEGORIES AND REAL EXAMPLES ALREADY IN THIS LIBRARY (your rubric -- ma
 
 Instructions:
 - Base your decision ONLY on the real metadata given above. Do not invent facts, citation counts, or claims not present in the abstract/description.
+- Reject items that merely mention AI/ML tools in passing rather than making an actual AI/ML/AGI research contribution -- e.g. clinical/medical-education commentary on ChatGPT, opinion pieces on AI in a classroom, policy guidelines that happen to reference AI, surveys of public perception. A high citation count on an off-topic paper is not a reason to include it; citation count is corroborating evidence of impact, not a substitute for topical fit.
+- Be skeptical of a citation count that seems implausible for the stated venue/age (e.g. tens of thousands of citations within a year or two from an obscure workshop or proceedings) -- if the venue and claimed citation count don't plausibly match, treat the signal as unreliable rather than as strong evidence for inclusion.
 - You MAY propose a genuinely new category if this item doesn't fit any existing one well AND represents a real distinct cluster (not just one oddball item) -- the library is meant to expand its taxonomy over time, not force everything into stale buckets.
-- Err toward inclusion when the objective signal is real and the abstract plausibly fits an AGI/AI-research library -- this library aims to be broad and current, not narrowly gatekept.
+- Err toward inclusion when the objective signal is real, plausible, AND the abstract shows this is genuinely AI/ML/AGI research (not adjacent-field commentary) -- broad and current, but still on-topic.
 - Write "significance" as a one-sentence paraphrase of what the abstract/description itself claims -- do not add outside claims.
 
 Respond with ONLY a JSON object, no markdown fences, no preamble:

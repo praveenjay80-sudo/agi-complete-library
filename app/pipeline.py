@@ -114,29 +114,19 @@ async def run_update(
             except Exception as e:
                 logger.warning("Cover backfill failed: %s", e)
 
-        # ---- Papers: real new arXiv submissions, corroborated with OpenAlex citation data ----
-        papers = await sources.fetch_new_arxiv_papers(max_results=MAX_PAPER_CANDIDATES)
+        # ---- Papers: discovered directly from OpenAlex's own citation ranking (already cited, not hope-it's-cited) ----
+        papers = await sources.discover_cited_papers(max_results=MAX_PAPER_CANDIDATES, api_key=openalex_key)
         for p in papers:
             candidates_seen += 1
             if _title_exists(conn, "paper", p["title"]):
                 continue
 
-            first_author = p["authors"].split(",")[0].strip() if p["authors"] else None
-            try:
-                oa = await sources.lookup_openalex_work(p["title"], first_author, openalex_key)
-            except Exception as e:
-                logger.warning("OpenAlex lookup failed for %r: %s", p["title"], e)
-                oa = None
-
-            if oa and oa.get("citation_count"):
-                objective_signal = f"OpenAlex match: {oa['citation_count']} citations, venue={oa.get('venue') or 'unknown'}"
-            else:
-                objective_signal = "New arXiv preprint, not yet indexed/cited on OpenAlex"
+            objective_signal = f"OpenAlex: {p['citation_count']} citations, venue={p.get('venue') or 'unknown'}"
 
             try:
                 verdict = await llm_curator.judge_candidate(
                     conn, anthropic_key, anthropic_model, "paper",
-                    p["title"], p["authors"], p["year"], p.get("primary_category"),
+                    p["title"], p["authors"], p["year"], p.get("venue"),
                     p["abstract"], objective_signal,
                 )
             except Exception as e:
@@ -146,7 +136,7 @@ async def run_update(
             if not verdict.get("include"):
                 conn.execute(
                     "INSERT INTO audit_log (action, reason, source, objective_signal, llm_reasoning) VALUES "
-                    "('reject', ?, 'arxiv', ?, ?)",
+                    "('reject', ?, 'openalex', ?, ?)",
                     (p["title"], objective_signal, verdict.get("reasoning")),
                 )
                 conn.commit()
@@ -161,17 +151,17 @@ async def run_update(
 
             item_cur = conn.execute(
                 "INSERT INTO items (kind, title, authors, year, venue, category_id, significance, "
-                "source_url, arxiv_id, openalex_id, citation_count, added_by) "
-                "VALUES ('paper', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'llm')",
+                "source_url, openalex_id, citation_count, added_by) "
+                "VALUES ('paper', ?, ?, ?, ?, ?, ?, ?, ?, ?, 'llm')",
                 (
-                    p["title"], p["authors"], p["year"], oa.get("venue") if oa else p.get("primary_category"),
-                    cat_id, verdict.get("significance"), p["source_url"], p["arxiv_id"],
-                    oa.get("openalex_id") if oa else None, oa.get("citation_count") if oa else None,
+                    p["title"], p["authors"], p["year"], p.get("venue"),
+                    cat_id, verdict.get("significance"), p["source_url"],
+                    p["openalex_id"], p["citation_count"],
                 ),
             )
             conn.execute(
                 "INSERT INTO audit_log (item_id, action, reason, source, objective_signal, llm_reasoning) VALUES "
-                "(?, 'add', ?, 'arxiv', ?, ?)",
+                "(?, 'add', ?, 'openalex', ?, ?)",
                 (item_cur.lastrowid, p["title"], objective_signal, verdict.get("reasoning")),
             )
             conn.commit()
